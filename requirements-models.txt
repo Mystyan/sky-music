@@ -1,0 +1,12 @@
+# 可选：真实模型依赖。默认镜像不安装，避免构建体积和权重下载失败。
+# 构建时加 --build-arg INSTALL_MODELS=1，或进入容器后手动安装。
+muscriptor>=0.3.0
+transformers>=4.45
+accelerate>=1.0
+huggingface_hub>=0.25
+onnxruntime-gpu>=1.18
+
+# 以下模型按需从 Git 安装（体积大，先确认 GPU 环境）：
+# vocalparse @ git+https://github.com/pymaster17/VocalParse.git
+# subroformer @ git+https://github.com/ArchiMickey/SubRoformer.git
+# beat-this @ git+https://github.com/CPJKU/beat_this.git
