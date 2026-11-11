@@ -48,6 +48,21 @@ curl -F "file=@test.mp3" -F "quality=medium" -F "title=测试" \
 - `stages`：每个阶段的模式与耗时
 - `warnings`：模型回退/降级说明
 
+## API
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/health` | 健康检查 |
+| `GET` | `/api/qualities` | 低/中/高三档对应的模型 |
+| `POST` | `/api/transcribe` | multipart：`file`、`quality`、`title`、`author` |
+| `POST` | `/api/transcribe-url` | JSON：`audio_url`、`quality`、`title`、`author` |
+
+部署到 FC 后，公开地址形如：
+
+```text
+https://<fc-function-url>/api/transcribe
+```
+
 ## Docker
 
 ```bash
