@@ -65,8 +65,9 @@ def _vocalparse_notes(path: Path, duration: float) -> list[Note]:
     notes: list[Note] = []
     for start, end in _chunks(path, duration):
         clip = path.parent / f"vocal_{int(start * 1000)}_{int(end * 1000)}.wav"
+        from ..audio import FFMPEG
         subprocess.run(
-            ["ffmpeg", "-y", "-ss", str(start), "-to", str(end), "-i", str(path),
+            [FFMPEG, "-y", "-ss", str(start), "-to", str(end), "-i", str(path),
              "-ar", "16000", "-ac", "1", str(clip)],
             capture_output=True, check=False,
         )

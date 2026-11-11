@@ -6,10 +6,6 @@ ENV PYTHONUNBUFFERED=1 \
     MODEL_DIR=/mnt/models \
     PORT=9000
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg libsndfile1 git curl \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 ARG INSTALL_MODELS=0

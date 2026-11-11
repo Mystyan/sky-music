@@ -1,30 +1,34 @@
 from __future__ import annotations
 
 import asyncio
-import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
 
 import httpx
 
+try:
+    import imageio_ffmpeg
+
+    FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
+except Exception:
+    FFMPEG = "ffmpeg"
+
 
 def ffprobe_duration(path: str | Path) -> float:
-    cmd = [
-        "ffprobe", "-v", "error", "-show_entries", "format=duration",
-        "-of", "json", str(path),
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    if proc.returncode != 0:
-        raise ValueError(f"ffprobe failed: {proc.stderr[-300:]}")
-    data = json.loads(proc.stdout or "{}")
-    return float(data.get("format", {}).get("duration", 0.0))
+    proc = subprocess.run([FFMPEG, "-i", str(path)], capture_output=True, text=True, check=False)
+    match = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", proc.stderr or "")
+    if not match:
+        raise ValueError("无法读取音频时长")
+    hours, minutes, seconds = match.groups()
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
 
 
 def convert_to_wav(src: str | Path, dst: str | Path, sample_rate: int = 44100, mono: bool = False) -> Path:
     dst = Path(dst)
     dst.parent.mkdir(parents=True, exist_ok=True)
-    cmd = ["ffmpeg", "-y", "-i", str(src), "-ar", str(sample_rate)]
+    cmd = [FFMPEG, "-y", "-i", str(src), "-ar", str(sample_rate)]
     if mono:
         cmd += ["-ac", "1"]
     else:
