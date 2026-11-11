@@ -1,6 +1,6 @@
 # sky-music
 
-把一首歌的音频，串成一条“分轨 → 人声/伴奏转谱 → 节奏/调性/和弦 → 光遇编排 → SkyStudio/ABC15”的工作流。默认 `MOCK_MODE=1`，没有 GPU、没有模型权重也能启动并跑通接口；设置 `MOCK_MODE=0` 并挂载模型后再启用真实模型。
+把一首歌的音频，串成一条“分轨 → 人声/伴奏转谱 → 节奏/调性/和弦 → 光遇编排 → SkyStudio/ABC15”的工作流。生产默认 `MOCK_MODE=0`，三档都必须加载真实模型。只有本地测试才显式设置 `MOCK_MODE=1`。
 
 ## 工作流
 
@@ -20,11 +20,13 @@ audio
 
 | 档位 | 分轨 | 人声 | 多乐器 | 排布 |
 |---|---|---|---|---|
-| 低 `low` | Demucs | GAME-small | MuScriptor-small | 单音，强拍根音 |
+| 低 `low` | Demucs | Basic Pitch | Basic Pitch | 单音，强拍根音 |
 | 中 `medium` | SubRoformer | GAME-medium | MuScriptor-medium | 双音，每两拍 |
-| 高 `high` | SubRoformer | VocalParse-1.7B + GAME-large | MuScriptor-large | 三音，每拍 |
+| 高 `high` | SubRoformer | VocalParse-1.7B | MuScriptor-large | 三音，每拍 |
 
-三档都保证：音域 C4–C6、同键间隔 ≥70ms、输出只包含 15 个光遇键位。模型缺失时会回退并在 `warnings` 中说明。
+三档都必须加载真实模型：低档不会偷偷用 mock，中档不会降级到低档，高档不会降级到中档。模型缺失时接口返回 503 并指出缺哪一个权重，而不是输出假谱。
+
+单音/三音指**同时按键数**：单音同一时刻最多 1 个键，三音最多 3 个键同时响。
 
 ## 本地运行
 
@@ -86,7 +88,7 @@ docker run --gpus all --rm -p 9000:9000 \
 
 | 环境变量 | 默认 | 说明 |
 |---|---|---|
-| `MOCK_MODE` | `1` | `0` 才启用真实模型 |
+| `MOCK_MODE` | `0` | 仅本地测试设为 `1`；生产必须为 `0` |
 | `DEVICE` | `cuda`/`cpu` | 推理设备 |
 | `MODEL_DIR` | `/mnt/models` | 权重目录 |
 | `VOCALPARSE_CKPT` | 空 | VocalParse 权重目录 |

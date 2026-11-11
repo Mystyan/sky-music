@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
 
 from ..config import settings
+from ..errors import ModelUnavailable
 
 
 @dataclass
@@ -97,7 +97,4 @@ def separate(src: str | Path, workdir: str | Path, spec: dict) -> Stems:
         except Exception as exc:
             warnings.append(f"Demucs 不可用：{exc.__class__.__name__}: {exc}")
 
-    fallback = workdir / "input_copy.wav"
-    shutil.copyfile(src, fallback)
-    warnings.append("分轨模型均不可用，已直接使用原音频。")
-    return Stems(vocals=fallback, instrumental=fallback, mode="copy", warnings=warnings)
+    raise ModelUnavailable("分轨模型不可用：" + "；".join(warnings))

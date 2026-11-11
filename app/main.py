@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .audio import download_file
 from .config import settings
+from .errors import ModelUnavailable
 from .pipeline import run_pipeline
 from .schemas import Quality, QUALITY_SPECS, TranscribeUrlRequest
 
@@ -85,6 +86,8 @@ async def transcribe(
         return await asyncio.to_thread(run_pipeline, tmp_path, quality, title, author)
     except HTTPException:
         raise
+    except ModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"{exc.__class__.__name__}: {exc}") from exc
     finally:
@@ -104,6 +107,8 @@ async def transcribe_url(body: TranscribeUrlRequest) -> dict:
         return await asyncio.to_thread(
             run_pipeline, tmp_path, body.quality, body.title, body.author
         )
+    except ModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"{exc.__class__.__name__}: {exc}") from exc
     finally:

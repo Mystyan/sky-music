@@ -12,8 +12,8 @@ def _bool(name: str, default: bool) -> bool:
 
 
 class Settings:
-    # Mock mode lets the container run end-to-end without GPU model weights.
-    mock_mode: bool = _bool("MOCK_MODE", True)
+    # Mock mode is for tests only. Production always requires real models.
+    mock_mode: bool = _bool("MOCK_MODE", False)
     device: str = os.getenv("DEVICE", "cuda" if os.getenv("CUDA_VISIBLE_DEVICES") else "cpu")
     model_dir: Path = Path(os.getenv("MODEL_DIR", "/mnt/models"))
     max_duration_sec: int = int(os.getenv("MAX_DURATION_SEC", "600"))

@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 from ..config import settings
+from ..errors import ModelUnavailable
 from ..mock import mock_transcription
 from ..schemas import Note
 
@@ -124,20 +125,32 @@ def transcribe_vocal(
     model = spec.get("vocal_model", "none")
     size = spec.get("vocal_size", "large")
 
-    if settings.mock_mode or model == "none":
+    if settings.mock_mode:
         return mock_transcription(duration).melody, "mock", ["MOCK_MODE：人声使用内置样例旋律。"]
 
-    if model in ("auto", "vocalparse") and settings.vocalparse_ckpt:
+    if model == "basic_pitch":
+        try:
+            from .basicpitch import melody
+            return melody(path), "basic_pitch", warnings
+        except Exception as exc:
+            raise ModelUnavailable(
+                f"Basic Pitch 不可用：{exc.__class__.__name__}: {exc}"
+            ) from exc
+
+    if model == "vocalparse":
+        if not settings.vocalparse_ckpt:
+            raise ModelUnavailable("高音质档需要 VocalParse，但 VOCALPARSE_CKPT 未配置。")
         try:
             return _vocalparse_notes(path, duration), "vocalparse", warnings
         except Exception as exc:
-            warnings.append(f"VocalParse 不可用：{exc.__class__.__name__}: {exc}")
+            raise ModelUnavailable(f"VocalParse 不可用：{exc.__class__.__name__}: {exc}") from exc
 
-    if model in ("auto", "game", "vocalparse") and settings.game_dir:
+    if model in ("game", "auto"):
+        if not settings.game_dir:
+            raise ModelUnavailable("中/低音质档需要 GAME，但 GAME_DIR 未配置。")
         try:
             return _game_notes(path, duration, size), f"game-{size}", warnings
         except Exception as exc:
-            warnings.append(f"GAME 不可用：{exc.__class__.__name__}: {exc}")
+            raise ModelUnavailable(f"GAME 不可用：{exc.__class__.__name__}: {exc}") from exc
 
-    warnings.append("人声模型不可用，已回退到内置样例旋律。")
-    return mock_transcription(duration).melody, "mock", warnings
+    raise ModelUnavailable(f"未知人声模型：{model}")

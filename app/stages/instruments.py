@@ -5,6 +5,7 @@ from pathlib import Path
 import mido
 
 from ..config import settings
+from ..errors import ModelUnavailable
 from ..mock import mock_transcription
 from ..schemas import Note, Track
 
@@ -70,23 +71,40 @@ def transcribe_instruments(
     model_kind = spec.get("instrument_model", "none")
     size = spec.get("instrument_size", "large")
 
-    if settings.mock_mode or model_kind == "none":
+    if settings.mock_mode:
         return mock_transcription(duration).tracks, "mock", ["MOCK_MODE：伴奏使用内置样例和弦。"]
 
-    if model_kind in ("auto", "muscriptor"):
+    if model_kind == "basic_pitch":
         try:
-            from muscriptor import TranscriptionModel  # type: ignore
-
-            model = TranscriptionModel.load_model(size)
-            midi_bytes = model.transcribe_to_midi(str(path))
-            midi_path = path.parent / "muscriptor.mid"
-            midi_path.write_bytes(midi_bytes)
-            tracks = _parse_midi(midi_path)
-            if tracks:
-                return tracks, "muscriptor", warnings
-            warnings.append("MuScriptor 输出为空，已回退到样例和弦。")
+            from .basicpitch import tracks
+            result = tracks(path)
+            if not result:
+                raise ModelUnavailable("Basic Pitch 输出为空。")
+            return result, "basic_pitch", warnings
+        except ModelUnavailable:
+            raise
         except Exception as exc:
-            warnings.append(f"MuScriptor 不可用：{exc.__class__.__name__}: {exc}")
+            raise ModelUnavailable(
+                f"Basic Pitch 不可用：{exc.__class__.__name__}: {exc}"
+            ) from exc
 
-    warnings.append("伴奏模型不可用，已回退到内置样例和弦。")
-    return mock_transcription(duration).tracks, "mock", warnings
+    if model_kind not in ("auto", "muscriptor"):
+        raise ModelUnavailable(f"未知多乐器模型：{model_kind}")
+
+    try:
+        from muscriptor import TranscriptionModel  # type: ignore
+
+        model = TranscriptionModel.load_model(size)
+        midi_bytes = model.transcribe_to_midi(str(path))
+        midi_path = path.parent / "muscriptor.mid"
+        midi_path.write_bytes(midi_bytes)
+        tracks = _parse_midi(midi_path)
+        if not tracks:
+            raise ModelUnavailable("MuScriptor 输出为空。")
+        return tracks, f"muscriptor-{size}", warnings
+    except ModelUnavailable:
+        raise
+    except Exception as exc:
+        raise ModelUnavailable(
+            f"MuScriptor-{size} 不可用：{exc.__class__.__name__}: {exc}"
+        ) from exc

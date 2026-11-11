@@ -2,7 +2,7 @@ FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    MOCK_MODE=1 \
+    MOCK_MODE=0 \
     MODEL_DIR=/mnt/models \
     PORT=9000
 
@@ -15,7 +15,8 @@ WORKDIR /app
 ARG INSTALL_MODELS=0
 COPY requirements.txt requirements-models.txt ./
 RUN pip install --no-cache-dir -r requirements.txt \
-    && if [ "$INSTALL_MODELS" = "1" ]; then pip install --no-cache-dir -r requirements-models.txt; fi
+    && if [ "$INSTALL_MODELS" = "1" ]; then pip install --no-cache-dir -r requirements-models.txt; fi \
+    && python -c "from demucs.pretrained import get_model; get_model('htdemucs')"
 
 COPY app ./app
 COPY README.md ./

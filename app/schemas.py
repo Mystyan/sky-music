@@ -18,11 +18,11 @@ class Quality(str, Enum):
 QUALITY_SPECS = {
     Quality.low: {
         "label": "低",
-        "description": "轻量模型，速度优先：Demucs + GAME-small + MuScriptor-small，单音输出。",
+        "description": "轻量模型，速度优先：Demucs + Basic Pitch，单音输出。",
         "separator": "demucs",
-        "vocal_model": "game",
+        "vocal_model": "basic_pitch",
         "vocal_size": "small",
-        "instrument_model": "muscriptor",
+        "instrument_model": "basic_pitch",
         "instrument_size": "small",
         "max_simultaneous": 1,
         "quantize_div": 2,
