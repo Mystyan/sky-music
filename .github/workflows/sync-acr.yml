@@ -1,0 +1,51 @@
+name: sync-to-acr
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "source tag in GHCR"
+        required: false
+        default: latest
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install crane
+        run: |
+          curl -sSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz | tar -xz crane
+          ./crane version
+
+      - name: Login to ACR
+        env:
+          ACR_HOST: crpi-tkfjf39csfld7amo.cn-hangzhou.personal.cr.aliyuncs.com
+          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          echo "$ACR_PASSWORD" | ./crane auth login "$ACR_HOST" -u "$ACR_USERNAME" --password-stdin
+
+      - name: Copy GHCR -> ACR
+        env:
+          ACR_HOST: crpi-tkfjf39csfld7amo.cn-hangzhou.personal.cr.aliyuncs.com
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          SRC="ghcr.io/${{ github.repository_owner }}/sky-music:${TAG}"
+          DST="${ACR_HOST}/mystyan/skymusic:${TAG}"
+          for i in 1 2 3; do
+            echo "attempt $i: $SRC -> $DST"
+            if ./crane copy --platform linux/amd64 "$SRC" "$DST"; then
+              echo "copy ok"
+              exit 0
+            fi
+            sleep 20
+          done
+          exit 1
+
+      - name: Verify
+        env:
+          ACR_HOST: crpi-tkfjf39csfld7amo.cn-hangzhou.personal.cr.aliyuncs.com
+          TAG: ${{ inputs.tag }}
+        run: |
+          ./crane manifest "${ACR_HOST}/mystyan/skymusic:${TAG}" | head -20
