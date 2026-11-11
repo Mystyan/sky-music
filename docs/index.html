@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>光遇谱面生成器</title>
+<style>
+  :root {
+    --bg: #070b18;
+    --panel: rgba(17, 26, 48, 0.72);
+    --panel-border: rgba(126, 178, 255, 0.18);
+    --text: #e8f0ff;
+    --muted: #8ea3c6;
+    --accent: #7cc4ff;
+    --accent-2: #ffd58a;
+    --danger: #ff8b8b;
+    --ok: #7ee2b8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 12% -10%, rgba(84, 128, 255, 0.22), transparent 60%),
+      radial-gradient(900px 600px at 105% 0%, rgba(255, 190, 120, 0.10), transparent 55%),
+      radial-gradient(700px 500px at 50% 120%, rgba(120, 255, 220, 0.08), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  }
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; opacity: .5;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 20%, #dbe9ff, transparent),
+      radial-gradient(1px 1px at 40% 70%, #fff, transparent),
+      radial-gradient(1px 1px at 85% 60%, #cfe2ff, transparent),
+      radial-gradient(1px 1px at 10% 85%, #fff, transparent),
+      radial-gradient(1px 1px at 55% 45%, #fff, transparent);
+    background-size: 100% 100%;
+  }
+  main { position: relative; max-width: 960px; margin: 0 auto; padding: 56px 20px 80px; }
+  header { text-align: center; margin-bottom: 34px; }
+  header h1 {
+    margin: 0 0 10px; font-size: 32px; letter-spacing: 2px; font-weight: 650;
+    background: linear-gradient(92deg, #cfe6ff, #8fc4ff 45%, #ffe1a8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 14px; letter-spacing: .5px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 22px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  }
+  .card + .card { margin-top: 20px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+  label.field { display: block; }
+  label.field span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: .4px; }
+  input[type=text] {
+    width: 100%; padding: 11px 13px; border-radius: 10px;
+    border: 1px solid rgba(126, 178, 255, .22); background: rgba(8, 14, 28, .7);
+    color: var(--text); font-size: 14px; outline: none;
+  }
+  input[type=text]:focus { border-color: rgba(124, 196, 255, .65); box-shadow: 0 0 0 3px rgba(124, 196, 255, .12); }
+  .drop {
+    margin-top: 16px; border: 1.5px dashed rgba(126, 178, 255, .35); border-radius: 14px;
+    padding: 28px 18px; text-align: center; cursor: pointer; transition: .18s ease;
+    background: rgba(10, 18, 34, .45);
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: rgba(20, 34, 62, .6); }
+  .drop strong { display: block; font-size: 15px; margin-bottom: 6px; font-weight: 600; }
+  .drop small { color: var(--muted); font-size: 12px; }
+  .drop .picked { color: var(--accent-2); font-size: 13px; margin-top: 8px; word-break: break-all; }
+  .qualities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+  @media (max-width: 640px) { .qualities { grid-template-columns: 1fr; } }
+  .q {
+    position: relative; border: 1px solid rgba(126, 178, 255, .18); border-radius: 14px;
+    padding: 14px 14px 12px; cursor: pointer; background: rgba(9, 16, 31, .55); transition: .18s ease;
+  }
+  .q:hover { border-color: rgba(124, 196, 255, .45); }
+  .q.active { border-color: var(--accent); background: rgba(29, 52, 92, .55); box-shadow: 0 0 0 3px rgba(124, 196, 255, .1); }
+  .q h3 { margin: 0 0 4px; font-size: 15px; }
+  .q .tag { font-size: 11px; color: var(--accent-2); letter-spacing: .5px; }
+  .q p { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .actions { margin-top: 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  button.primary {
+    border: 0; border-radius: 12px; padding: 13px 28px; font-size: 15px; font-weight: 600; cursor: pointer;
+    color: #05101f; background: linear-gradient(96deg, #9fd6ff, #6fb7ff 55%, #ffd58a);
+    box-shadow: 0 10px 30px rgba(90, 160, 255, .25); transition: .18s ease;
+  }
+  button.primary:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+  button.ghost {
+    border: 1px solid rgba(126, 178, 255, .3); background: rgba(10, 18, 34, .6); color: var(--text);
+    border-radius: 10px; padding: 10px 16px; font-size: 13px; cursor: pointer;
+  }
+  button.ghost:hover { border-color: var(--accent); }
+  .hint { color: var(--muted); font-size: 12px; }
+  .status { margin-top: 16px; font-size: 13px; min-height: 20px; }
+  .status.err { color: var(--danger); }
+  .status.ok { color: var(--ok); }
+  .spinner {
+    width: 15px; height: 15px; border-radius: 50%; display: inline-block; vertical-align: -2px;
+    border: 2px solid rgba(124, 196, 255, .25); border-top-color: var(--accent);
+    animation: spin .9s linear infinite; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .chip {
+    border: 1px solid rgba(126, 178, 255, .22); background: rgba(11, 20, 38, .65);
+    border-radius: 999px; padding: 7px 14px; font-size: 12.5px; color: #cfe0ff;
+  }
+  .chip b { color: var(--accent-2); font-weight: 600; }
+  .warn { border-left: 3px solid var(--accent-2); background: rgba(255, 213, 138, .07); padding: 10px 12px; border-radius: 8px; font-size: 12.5px; color: #ffe3b4; margin-bottom: 16px; }
+  h2.section { font-size: 14px; letter-spacing: 1px; color: var(--muted); font-weight: 600; margin: 22px 0 10px; }
+  .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 520px; }
+  .key {
+    aspect-ratio: 1.45 / 1; border-radius: 10px; border: 1px solid rgba(126, 178, 255, .18);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--muted); background: rgba(9, 16, 31, .6); transition: .2s ease;
+  }
+  .key b { font-size: 14px; color: var(--text); font-weight: 600; }
+  canvas#roll { width: 100%; height: 240px; border-radius: 12px; border: 1px solid rgba(126, 178, 255, .16); background: rgba(7, 12, 24, .8); }
+  .downloads { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  details.raw { margin-top: 18px; }
+  details.raw summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
+  details.raw pre {
+    max-height: 260px; overflow: auto; background: rgba(4, 8, 16, .8); border-radius: 10px; padding: 12px;
+    font-size: 11.5px; color: #a8c4ee; border: 1px solid rgba(126, 178, 255, .12);
+  }
+  footer { text-align: center; color: rgba(142, 163, 198, .6); font-size: 12px; margin-top: 34px; }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<main>
+  <header>
+    <h1>光遇谱面生成器</h1>
+    <p>音频 → 人声 / 和弦 / 多乐器 → 15 键光遇谱（sky-scores 编配）</p>
+  </header>
+
+  <section class="card">
+    <div class="row">
+      <label class="field"><span>曲名</span><input id="title" type="text" placeholder="未命名" /></label>
+      <label class="field"><span>作者</span><input id="author" type="text" placeholder="可选" /></label>
+    </div>
+
+    <div class="drop" id="drop">
+      <strong>拖入音频文件，或点击选择</strong>
+      <small>支持 mp3 / wav / flac / m4a，建议 10 分钟以内</small>
+      <div class="picked" id="picked"></div>
+      <input id="file" type="file" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg" hidden />
+    </div>
+
+    <div class="qualities" id="qualities">
+      <div class="q active" data-q="low">
+        <h3>低</h3><div class="tag">速度优先</div>
+        <p>Demucs + Basic Pitch<br />快速出谱，单音旋律</p>
+      </div>
+      <div class="q" data-q="medium">
+        <h3>中</h3><div class="tag">标准质量</div>
+        <p>SubRoformer + GAME-medium + MuScriptor-medium<br />双音与和弦</p>
+      </div>
+      <div class="q" data-q="high">
+        <h3>高</h3><div class="tag">最高质量</div>
+        <p>SubRoformer + VocalParse-1.7B + MuScriptor-large<br />最完整的声部还原</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="go">开始生成</button>
+      <span class="hint">生成期间请勿关闭页面；首次冷启动会慢一些</span>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section class="card" id="result" hidden>
+    <div class="stats" id="stats"></div>
+    <div id="warnings"></div>
+
+    <h2 class="section">15 键使用热度</h2>
+    <div class="keys" id="keys"></div>
+
+    <h2 class="section">谱面预览</h2>
+    <canvas id="roll"></canvas>
+
+    <div class="downloads">
+      <button class="ghost" id="dl-json">下载 SkyStudio JSON</button>
+      <button class="ghost" id="dl-abc">下载 15 键 ABC 谱</button>
+      <button class="ghost" id="copy-json">复制 songNotes</button>
+    </div>
+
+    <details class="raw">
+      <summary>查看原始 JSON</summary>
+      <pre id="raw"></pre>
+    </details>
+  </section>
+
+  <footer>sky-music · 模型质量三档 · sky-scores 编配</footer>
+</main>
+
+<script>
+const NOTE_NAMES = ["C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5","A5","B5","C6"];
+const API_BASE = location.hostname.endsWith("fcapp.run")
+  ? ""
+  : "https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run";
+const $ = (id) => document.getElementById(id);
+
+let pickedFile = null;
+let quality = "low";
+let lastResult = null;
+
+const drop = $("drop"), fileInput = $("file");
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => {
+  e.preventDefault(); drop.classList.remove("over");
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+function setFile(f) {
+  pickedFile = f;
+  $("picked").textContent = `${f.name} · ${(f.size / 1024 / 1024).toFixed(2)} MB`;
+}
+
+$("qualities").addEventListener("click", (e) => {
+  const card = e.target.closest(".q");
+  if (!card) return;
+  document.querySelectorAll(".q").forEach((q) => q.classList.remove("active"));
+  card.classList.add("active");
+  quality = card.dataset.q;
+});
+
+function setStatus(text, kind) {
+  const el = $("status");
+  el.className = "status" + (kind ? " " + kind : "");
+  el.innerHTML = text;
+}
+
+$("go").addEventListener("click", async () => {
+  if (!pickedFile) { setStatus("请先选择一个音频文件", "err"); return; }
+  const btn = $("go");
+  btn.disabled = true;
+  const t0 = performance.now();
+  const timer = setInterval(() => {
+    const s = ((performance.now() - t0) / 1000).toFixed(0);
+    setStatus(`<span class="spinner"></span>正在转谱… 已用 ${s}s`);
+  }, 1000);
+  setStatus(`<span class="spinner"></span>正在转谱…`);
+
+  const fd = new FormData();
+  fd.append("file", pickedFile);
+  fd.append("quality", quality);
+  fd.append("title", $("title").value || "未命名");
+  fd.append("author", $("author").value || "");
+
+  try {
+    const resp = await fetch(API_BASE + "/api/transcribe", { method: "POST", body: fd });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const msg = data.detail || `HTTP ${resp.status}`;
+      throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+    }
+    lastResult = data;
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    setStatus(`生成完成，用时 ${secs}s`, "ok");
+    render(data);
+  } catch (err) {
+    setStatus(`失败：${err.message}`, "err");
+  } finally {
+    clearInterval(timer);
+    btn.disabled = false;
+  }
+});
+
+function render(data) {
+  const notes = (data.sky_json && data.sky_json[0] && data.sky_json[0].songNotes) || [];
+  const stats = data.stats || {};
+  $("stats").innerHTML = [
+    ["音符", stats.notes ?? notes.length],
+    ["BPM", data.bpm],
+    ["调性", data.key],
+    ["时长", `${data.duration}s`],
+    ["档位", data.quality],
+    ["同按上限", stats.max_simultaneous ?? "不限"],
+  ].map(([k, v]) => `<div class="chip">${k} <b>${v}</b></div>`).join("");
+
+  const warns = data.warnings || [];
+  $("warnings").innerHTML = warns.length
+    ? `<div class="warn">${warns.map((w) => `<div>· ${escapeHtml(w)}</div>`).join("")}</div>`
+    : "";
+
+  const counts = new Array(15).fill(0);
+  notes.forEach((n) => {
+    const m = /Key(\d+)$/.exec(n.key || "");
+    if (m) counts[Number(m[1])]++;
+  });
+  const max = Math.max(1, ...counts);
+  $("keys").innerHTML = counts.map((c, i) => {
+    const alpha = 0.06 + 0.75 * (c / max);
+    return `<div class="key" style="background: rgba(124,196,255,${alpha.toFixed(3)})">
+      <b>${NOTE_NAMES[i]}</b><span>${c}</span></div>`;
+  }).join("");
+
+  drawRoll(notes, data.duration || 0);
+  $("raw").textContent = JSON.stringify(data.sky_json, null, 2);
+  $("result").hidden = false;
+  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function drawRoll(notes, duration) {
+  const canvas = $("roll");
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const pad = 10;
+  const rowH = (h - pad * 2) / 15;
+  const total = Math.max(duration, ...notes.map((n) => n.time / 1000), 1);
+  const xs = (t) => pad + (t / total) * (w - pad * 2);
+
+  for (let i = 0; i < 15; i++) {
+    ctx.fillStyle = i % 2 ? "rgba(20,32,58,.35)" : "rgba(14,23,44,.35)";
+    ctx.fillRect(0, pad + (14 - i) * rowH, w, rowH - 1);
+  }
+  ctx.fillStyle = "rgba(124,196,255,.75)";
+  const block = Math.max(3, (w / 240));
+  notes.forEach((n) => {
+    const m = /Key(\d+)$/.exec(n.key || "");
+    if (!m) return;
+    const idx = Number(m[1]);
+    const x = xs(n.time / 1000);
+    const y = pad + (14 - idx) * rowH + rowH * 0.18;
+    ctx.fillRect(x, y, block, rowH * 0.64);
+  });
+}
+
+function download(name, text, type) {
+  const blob = new Blob([text], { type: type || "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+$("dl-json").addEventListener("click", () => {
+  if (!lastResult) return;
+  const name = ($("title").value || "sky") + ".json";
+  download(name, JSON.stringify(lastResult.sky_json, null, 2));
+});
+$("dl-abc").addEventListener("click", () => {
+  if (!lastResult) return;
+  download(($("title").value || "sky") + ".txt", lastResult.abc15 || "", "text/plain;charset=utf-8");
+});
+$("copy-json").addEventListener("click", async () => {
+  if (!lastResult || !lastResult.sky_json || !lastResult.sky_json[0]) return;
+  const body = JSON.stringify(lastResult.sky_json[0].songNotes || [], null, 2);
+  try {
+    await navigator.clipboard.writeText(body);
+    setStatus("songNotes 已复制到剪贴板", "ok");
+  } catch {
+    setStatus("复制失败，请手动从原始 JSON 复制", "err");
+  }
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+</script>
+</body>
+</html>

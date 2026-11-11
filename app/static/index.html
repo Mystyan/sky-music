@@ -204,6 +204,9 @@
 
 <script>
 const NOTE_NAMES = ["C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5","A5","B5","C6"];
+const API_BASE = location.hostname.endsWith("fcapp.run")
+  ? ""
+  : "https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run";
 const $ = (id) => document.getElementById(id);
 
 let pickedFile = null;
@@ -257,7 +260,7 @@ $("go").addEventListener("click", async () => {
   fd.append("author", $("author").value || "");
 
   try {
-    const resp = await fetch("/api/transcribe", { method: "POST", body: fd });
+    const resp = await fetch(API_BASE + "/api/transcribe", { method: "POST", body: fd });
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
       const msg = data.detail || `HTTP ${resp.status}`;
