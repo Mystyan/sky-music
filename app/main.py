@@ -9,10 +9,11 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
+from . import tasks
 from .audio import download_file
 from .config import settings
 from .errors import ModelUnavailable
-from .pipeline import run_pipeline
+from .pipeline import STAGES, run_pipeline, stage_models
 from .schemas import Quality, QUALITY_SPECS, TranscribeUrlRequest
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -40,7 +41,11 @@ def root() -> dict:
         "service": "sky-music",
         "version": settings.app_version,
         "mode": "mock" if settings.mock_mode else "models",
-        "endpoints": ["/health", "/api/qualities", "/api/transcribe", "/api/transcribe-url"],
+        "endpoints": [
+            "/health", "/api/status", "/api/qualities",
+            "/api/tasks", "/api/tasks/{task_id}",
+            "/api/transcribe", "/api/transcribe-url",
+        ],
     }
 
 
@@ -56,6 +61,29 @@ def health() -> dict:
     }
 
 
+@app.get("/api/status")
+def status() -> dict:
+    """服务状态：是否就绪、GPU、当前在跑的任务数、各档位每阶段模型。"""
+    load = tasks.stats()
+    return {
+        "ok": True,
+        "ready": True,
+        "device": settings.device,
+        "mode": "mock" if settings.mock_mode else "models",
+        "stages": STAGES,
+        "busy": load["running"],
+        "queued": max(0, load["tasks"] - load["running"]),
+        "qualities": {
+            quality.value: {
+                "label": spec["label"],
+                "description": spec["description"],
+                "stage_models": stage_models(quality),
+            }
+            for quality, spec in QUALITY_SPECS.items()
+        },
+    }
+
+
 @app.get("/api/qualities")
 def qualities() -> list[dict]:
     return [
@@ -66,9 +94,67 @@ def qualities() -> list[dict]:
             "vocal_model": f'{spec["vocal_model"]}-{spec["vocal_size"]}',
             "instrument_model": f'{spec["instrument_model"]}-{spec["instrument_size"]}',
             "separator": spec["separator"],
+            "stage_models": stage_models(quality),
         }
         for quality, spec in QUALITY_SPECS.items()
     ]
+
+
+def _save_upload(file: UploadFile) -> Path:
+    suffix = Path(file.filename or "audio.mp3").suffix or ".mp3"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=str(settings.temp_dir)) as fh:
+        path = Path(fh.name)
+        total = 0
+        while True:
+            chunk = file.file.read(1024 * 1024)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > MAX_UPLOAD_BYTES:
+                fh.close()
+                path.unlink(missing_ok=True)
+                raise HTTPException(status_code=413, detail="文件过大")
+            fh.write(chunk)
+    if total == 0:
+        path.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="空文件")
+    return path
+
+
+@app.post("/api/tasks")
+def create_task(
+    file: UploadFile = File(...),
+    quality: Quality = Form(Quality.low),
+    title: str = Form("未命名"),
+    author: str = Form(""),
+) -> dict:
+    """创建转谱任务，立即返回 task_id；用 GET /api/tasks/{id} 查询进度。"""
+    path = _save_upload(file)
+    if settings.mock_mode is False and quality is not Quality.low:
+        spec = QUALITY_SPECS[quality]
+        missing = []
+        if spec["separator"] == "subroformer" and not settings.subroformer_dir:
+            missing.append("SUBROFORMER_DIR")
+        if spec["vocal_model"] == "game" and not settings.game_dir:
+            missing.append("GAME_DIR")
+        if spec["vocal_model"] == "vocalparse" and not settings.vocalparse_ckpt:
+            missing.append("VOCALPARSE_CKPT")
+        if missing:
+            path.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=503,
+                detail=f"{quality.value} 档缺少模型配置：{', '.join(missing)}",
+            )
+    task_id = tasks.create(path, quality, title, author)
+    return {"task_id": task_id, "status_url": f"/api/tasks/{task_id}"}
+
+
+@app.get("/api/tasks/{task_id}")
+def task_detail(task_id: str) -> dict:
+    data = tasks.snapshot(task_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="任务不存在或已过期（实例重启后任务会丢失）")
+    return data
 
 
 @app.post("/api/transcribe")

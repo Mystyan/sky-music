@@ -39,27 +39,28 @@
       radial-gradient(1px 1px at 55% 45%, #fff, transparent);
     background-size: 100% 100%;
   }
-  main { position: relative; max-width: 960px; margin: 0 auto; padding: 56px 20px 80px; }
-  header { text-align: center; margin-bottom: 34px; }
+  main { position: relative; max-width: 960px; margin: 0 auto; padding: 48px 20px 80px; }
+  header { text-align: center; margin-bottom: 26px; }
   header h1 {
     margin: 0 0 10px; font-size: 32px; letter-spacing: 2px; font-weight: 650;
     background: linear-gradient(92deg, #cfe6ff, #8fc4ff 45%, #ffe1a8);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   header p { margin: 0; color: var(--muted); font-size: 14px; letter-spacing: .5px; }
+  .svc { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11.5px; color: var(--muted); border: 1px solid var(--panel-border);
+    border-radius: 999px; padding: 4px 11px; background: rgba(9, 16, 31, .5);
+  }
+  .badge b { color: var(--ok); font-weight: 600; }
   .card {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 18px;
-    padding: 22px;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px;
+    padding: 22px; backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
   }
   .card + .card { margin-top: 20px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
-  label.field { display: block; }
-  label.field span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: .4px; }
+  label.field span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   input[type=text] {
     width: 100%; padding: 11px 13px; border-radius: 10px;
     border: 1px solid rgba(126, 178, 255, .22); background: rgba(8, 14, 28, .7);
@@ -68,7 +69,7 @@
   input[type=text]:focus { border-color: rgba(124, 196, 255, .65); box-shadow: 0 0 0 3px rgba(124, 196, 255, .12); }
   .drop {
     margin-top: 16px; border: 1.5px dashed rgba(126, 178, 255, .35); border-radius: 14px;
-    padding: 28px 18px; text-align: center; cursor: pointer; transition: .18s ease;
+    padding: 26px 18px; text-align: center; cursor: pointer; transition: .18s ease;
     background: rgba(10, 18, 34, .45);
   }
   .drop:hover, .drop.over { border-color: var(--accent); background: rgba(20, 34, 62, .6); }
@@ -78,14 +79,15 @@
   .qualities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
   @media (max-width: 640px) { .qualities { grid-template-columns: 1fr; } }
   .q {
-    position: relative; border: 1px solid rgba(126, 178, 255, .18); border-radius: 14px;
-    padding: 14px 14px 12px; cursor: pointer; background: rgba(9, 16, 31, .55); transition: .18s ease;
+    border: 1px solid rgba(126, 178, 255, .18); border-radius: 14px; padding: 14px;
+    cursor: pointer; background: rgba(9, 16, 31, .55); transition: .18s ease;
   }
   .q:hover { border-color: rgba(124, 196, 255, .45); }
   .q.active { border-color: var(--accent); background: rgba(29, 52, 92, .55); box-shadow: 0 0 0 3px rgba(124, 196, 255, .1); }
   .q h3 { margin: 0 0 4px; font-size: 15px; }
   .q .tag { font-size: 11px; color: var(--accent-2); letter-spacing: .5px; }
   .q p { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .q.unavailable { opacity: .55; }
   .actions { margin-top: 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   button.primary {
     border: 0; border-radius: 12px; padding: 13px 28px; font-size: 15px; font-weight: 600; cursor: pointer;
@@ -108,6 +110,27 @@
     animation: spin .9s linear infinite; margin-right: 8px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .progress { margin-top: 16px; display: none; }
+  .progress.on { display: block; }
+  .bar { height: 7px; border-radius: 999px; background: rgba(10, 18, 34, .9); overflow: hidden; margin-bottom: 12px; }
+  .bar > i {
+    display: block; height: 100%; width: 0%; transition: width .4s ease;
+    background: linear-gradient(90deg, #6fb7ff, #9fd6ff, #ffd58a);
+  }
+  .phase { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+  .phase b { color: var(--text); font-weight: 600; }
+  .stages { display: grid; gap: 7px; }
+  .st {
+    display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted);
+    padding: 7px 10px; border-radius: 9px; border: 1px solid transparent; background: rgba(9, 16, 31, .4);
+  }
+  .st .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(126, 178, 255, .25); flex: 0 0 auto; }
+  .st .name { flex: 0 0 92px; color: var(--text); }
+  .st .model { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; opacity: .85; }
+  .st .time { flex: 0 0 auto; font-size: 11.5px; color: var(--accent-2); }
+  .st.running { border-color: rgba(124, 196, 255, .35); background: rgba(29, 52, 92, .4); color: var(--text); }
+  .st.running .dot { background: var(--accent); box-shadow: 0 0 0 4px rgba(124, 196, 255, .15); }
+  .st.done .dot { background: var(--ok); }
   .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 18px; }
   .chip {
     border: 1px solid rgba(126, 178, 255, .22); background: rgba(11, 20, 38, .65);
@@ -120,7 +143,7 @@
   .key {
     aspect-ratio: 1.45 / 1; border-radius: 10px; border: 1px solid rgba(126, 178, 255, .18);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: 11px; color: var(--muted); background: rgba(9, 16, 31, .6); transition: .2s ease;
+    font-size: 11px; color: var(--muted); background: rgba(9, 16, 31, .6);
   }
   .key b { font-size: 14px; color: var(--text); font-weight: 600; }
   canvas#roll { width: 100%; height: 240px; border-radius: 12px; border: 1px solid rgba(126, 178, 255, .16); background: rgba(7, 12, 24, .8); }
@@ -140,6 +163,7 @@
   <header>
     <h1>光遇谱面生成器</h1>
     <p>音频 → 人声 / 和弦 / 多乐器 → 15 键光遇谱（sky-scores 编配）</p>
+    <div class="svc" id="svc"></div>
   </header>
 
   <section class="card">
@@ -172,9 +196,15 @@
 
     <div class="actions">
       <button class="primary" id="go">开始生成</button>
-      <span class="hint">生成期间请勿关闭页面；首次冷启动会慢一些</span>
+      <span class="hint">首次请求需要唤醒 GPU 实例，约 20–60 秒</span>
     </div>
     <div class="status" id="status"></div>
+
+    <div class="progress" id="progress">
+      <div class="bar"><i id="bar"></i></div>
+      <div class="phase" id="phase"></div>
+      <div class="stages" id="stages"></div>
+    </div>
   </section>
 
   <section class="card" id="result" hidden>
@@ -199,19 +229,53 @@
     </details>
   </section>
 
-  <footer>sky-music · 模型质量三档 · sky-scores 编配</footer>
+  <footer>sky-music · 前后端分离 · 后端函数计算（GPU）· 三档模型质量</footer>
 </main>
 
 <script>
 const NOTE_NAMES = ["C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5","A5","B5","C6"];
-const API_BASE = location.hostname.endsWith("fcapp.run")
-  ? ""
-  : "https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run";
+const API_BASE = new URLSearchParams(location.search).get("api")
+  || (location.hostname.endsWith("fcapp.run") ? "" : "https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run");
+const STAGE_LABELS = {
+  ingest: "解码音频", load: "重采样", separate: "分离音轨", vocal: "人声转谱",
+  instruments: "乐器转谱", rhythm_harmony: "节奏与和弦", arrange: "光遇编配", export: "导出谱面",
+};
 const $ = (id) => document.getElementById(id);
 
-let pickedFile = null;
-let quality = "low";
-let lastResult = null;
+let pickedFile = null, quality = "low", lastResult = null, stageModels = {}, stageOrder = [];
+
+async function loadStatus() {
+  const box = $("svc");
+  box.innerHTML = '<span class="badge">检查服务状态…</span>';
+  try {
+    const r = await fetch(API_BASE + "/api/status", { cache: "no-store" });
+    const s = await r.json();
+    stageOrder = s.stages || Object.keys(STAGE_LABELS);
+    stageModels = (s.qualities && s.qualities[quality] && s.qualities[quality].stage_models) || {};
+    box.innerHTML = `
+      <span class="badge">服务 <b>在线</b></span>
+      <span class="badge">算力 <b>${s.device}</b></span>
+      <span class="badge">进行中 <b>${s.busy}</b></span>
+    `;
+    renderStageList(stageOrder, {}, null);
+  } catch (e) {
+    box.innerHTML = '<span class="badge">服务 <b style="color:#ff8b8b">不可达</b></span>';
+  }
+}
+
+function renderStageList(order, doneMap, current) {
+  $("stages").innerHTML = order.map((stage) => {
+    const model = stageModels[stage] || "";
+    const cls = doneMap[stage] ? "done" : (stage === current ? "running" : "");
+    const t = doneMap[stage] ? `${doneMap[stage]}s` : "";
+    return `<div class="st ${cls}">
+      <span class="dot"></span>
+      <span class="name">${STAGE_LABELS[stage] || stage}</span>
+      <span class="model">${escapeHtml(model)}</span>
+      <span class="time">${t}</span>
+    </div>`;
+  }).join("");
+}
 
 const drop = $("drop"), fileInput = $("file");
 drop.addEventListener("click", () => fileInput.click());
@@ -222,18 +286,18 @@ drop.addEventListener("drop", (e) => {
   if (e.dataTransfer.files && e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener("change", () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
-
 function setFile(f) {
   pickedFile = f;
   $("picked").textContent = `${f.name} · ${(f.size / 1024 / 1024).toFixed(2)} MB`;
 }
 
-$("qualities").addEventListener("click", (e) => {
+$("qualities").addEventListener("click", async (e) => {
   const card = e.target.closest(".q");
   if (!card) return;
   document.querySelectorAll(".q").forEach((q) => q.classList.remove("active"));
   card.classList.add("active");
   quality = card.dataset.q;
+  await loadStatus();
 });
 
 function setStatus(text, kind) {
@@ -246,12 +310,20 @@ $("go").addEventListener("click", async () => {
   if (!pickedFile) { setStatus("请先选择一个音频文件", "err"); return; }
   const btn = $("go");
   btn.disabled = true;
+  lastResult = null;
+  $("result").hidden = true;
+  $("progress").classList.add("on");
+  $("bar").style.width = "2%";
+  const done = {};
+  let current = null;
+  renderStageList(stageOrder, done, current);
+
   const t0 = performance.now();
-  const timer = setInterval(() => {
+  const wakeTimer = setInterval(() => {
     const s = ((performance.now() - t0) / 1000).toFixed(0);
-    setStatus(`<span class="spinner"></span>正在转谱… 已用 ${s}s`);
-  }, 1000);
-  setStatus(`<span class="spinner"></span>正在转谱…`);
+    $("phase").innerHTML = `<b>正在唤醒 GPU 实例</b> · 冷启动约 20–60 秒（已等待 ${s}s）`;
+    $("bar").style.width = "3%";
+  }, 500);
 
   const fd = new FormData();
   fd.append("file", pickedFile);
@@ -259,23 +331,66 @@ $("go").addEventListener("click", async () => {
   fd.append("title", $("title").value || "未命名");
   fd.append("author", $("author").value || "");
 
+  let taskId = null;
   try {
-    const resp = await fetch(API_BASE + "/api/transcribe", { method: "POST", body: fd });
+    const resp = await fetch(API_BASE + "/api/tasks", { method: "POST", body: fd });
     const data = await resp.json().catch(() => ({}));
-    if (!resp.ok) {
-      const msg = data.detail || `HTTP ${resp.status}`;
-      throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
-    }
-    lastResult = data;
-    const secs = ((performance.now() - t0) / 1000).toFixed(1);
-    setStatus(`生成完成，用时 ${secs}s`, "ok");
-    render(data);
+    if (!resp.ok) throw new Error(data.detail || `HTTP ${resp.status}`);
+    taskId = data.task_id;
+    clearInterval(wakeTimer);
+    setStatus(`<span class="spinner"></span>任务已创建，开始处理…`);
+    $("phase").innerHTML = "<b>GPU 实例已就绪</b>，开始处理";
   } catch (err) {
+    clearInterval(wakeTimer);
     setStatus(`失败：${err.message}`, "err");
-  } finally {
-    clearInterval(timer);
+    $("progress").classList.remove("on");
     btn.disabled = false;
+    return;
   }
+
+  const poll = async () => {
+    try {
+      const r = await fetch(`${API_BASE}/api/tasks/${taskId}`, { cache: "no-store" });
+      if (r.status === 404) {
+        $("phase").innerHTML = "<b>任务丢失</b>（实例已重建），请重新提交";
+        setStatus("任务丢失，请重试", "err");
+        btn.disabled = false;
+        return;
+      }
+      const t = await r.json();
+      const stages = t.events.filter((e) => e.type === "stage_done");
+      stages.forEach((e) => { done[e.stage] = e.seconds; });
+      current = t.stage || null;
+      const models = t.models || stageModels;
+      if (models && Object.keys(models).length) stageModels = models;
+      renderStageList(stageOrder.length ? stageOrder : Object.keys(models || {}), done, current);
+      const pct = Math.max(3, Math.min(99, Math.round(t.progress * 100)));
+      $("bar").style.width = pct + "%";
+      if (t.status === "running") {
+        $("phase").innerHTML = current
+          ? `<b>${STAGE_LABELS[current] || current}</b> · ${escapeHtml(stageModels[current] || "")}`
+          : "<b>准备中</b>";
+        setStatus(`<span class="spinner"></span>处理中 ${pct}% · 已用 ${t.elapsed}s`);
+        setTimeout(poll, 1200);
+      } else if (t.status === "done") {
+        $("bar").style.width = "100%";
+        $("phase").innerHTML = "<b>完成</b>";
+        const secs = ((performance.now() - t0) / 1000).toFixed(1);
+        setStatus(`生成完成，用时 ${secs}s`, "ok");
+        lastResult = t.result;
+        render(t.result);
+        btn.disabled = false;
+      } else {
+        setStatus(`失败：${t.error || "未知错误"}`, "err");
+        $("progress").classList.remove("on");
+        btn.disabled = false;
+      }
+    } catch (err) {
+      setStatus(`查询进度失败：${err.message}`, "err");
+      btn.disabled = false;
+    }
+  };
+  poll();
 });
 
 function render(data) {
@@ -287,7 +402,7 @@ function render(data) {
     ["调性", data.key],
     ["时长", `${data.duration}s`],
     ["档位", data.quality],
-    ["同按上限", stats.max_simultaneous ?? "不限"],
+    ["耗时", `${data.elapsed ?? "-"}s`],
   ].map(([k, v]) => `<div class="chip">${k} <b>${v}</b></div>`).join("");
 
   const warns = data.warnings || [];
@@ -321,12 +436,10 @@ function drawRoll(notes, duration) {
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, w, h);
-
   const pad = 10;
   const rowH = (h - pad * 2) / 15;
   const total = Math.max(duration, ...notes.map((n) => n.time / 1000), 1);
   const xs = (t) => pad + (t / total) * (w - pad * 2);
-
   for (let i = 0; i < 15; i++) {
     ctx.fillStyle = i % 2 ? "rgba(20,32,58,.35)" : "rgba(14,23,44,.35)";
     ctx.fillRect(0, pad + (14 - i) * rowH, w, rowH - 1);
@@ -354,8 +467,7 @@ function download(name, text, type) {
 
 $("dl-json").addEventListener("click", () => {
   if (!lastResult) return;
-  const name = ($("title").value || "sky") + ".json";
-  download(name, JSON.stringify(lastResult.sky_json, null, 2));
+  download(($("title").value || "sky") + ".json", JSON.stringify(lastResult.sky_json, null, 2));
 });
 $("dl-abc").addEventListener("click", () => {
   if (!lastResult) return;
@@ -375,6 +487,8 @@ $("copy-json").addEventListener("click", async () => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+loadStatus();
 </script>
 </body>
 </html>
