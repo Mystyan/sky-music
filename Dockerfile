@@ -59,6 +59,9 @@ RUN pip install --no-cache-dir basic-pitch
 # 预下载 Demucs 权重，避免冷启动联网
 RUN python -c "from demucs.pretrained import get_model; get_model('htdemucs')"
 
+# Basic Pitch 的 TFLite 运行时在新版本 numpy 下不稳定，改用 ONNX 推理
+RUN pip install --no-cache-dir onnxruntime
+
 COPY app ./app
 COPY vendor ./vendor
 COPY README.md ./

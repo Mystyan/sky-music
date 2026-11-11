@@ -11,10 +11,26 @@ def _bool(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _detect_device() -> str:
+    explicit = os.getenv("DEVICE")
+    if explicit:
+        return explicit
+    if os.getenv("CUDA_VISIBLE_DEVICES"):
+        return "cuda"
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:
+        pass
+    return "cpu"
+
+
 class Settings:
     # Mock mode is for tests only. Production always requires real models.
     mock_mode: bool = _bool("MOCK_MODE", False)
-    device: str = os.getenv("DEVICE", "cuda" if os.getenv("CUDA_VISIBLE_DEVICES") else "cpu")
+    device: str = _detect_device()
     model_dir: Path = Path(os.getenv("MODEL_DIR", "/mnt/models"))
     max_duration_sec: int = int(os.getenv("MAX_DURATION_SEC", "600"))
     temp_dir: Path = Path(os.getenv("TEMP_DIR", "/tmp/sky-music"))

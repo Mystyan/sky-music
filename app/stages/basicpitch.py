@@ -5,10 +5,25 @@ from pathlib import Path
 from ..schemas import Note, Track
 
 
+def _model_path() -> str | None:
+    """优先用包内自带的 ONNX 模型，避免 TFLite 运行时兼容问题。"""
+    try:
+        import basic_pitch
+
+        path = Path(basic_pitch.__file__).parent / "saved_models" / "icassp_2022" / "nmp.onnx"
+        return str(path) if path.exists() else None
+    except Exception:
+        return None
+
+
 def _events(path: str | Path):
     from basic_pitch.inference import predict  # type: ignore
 
-    _, _, note_events = predict(str(path))
+    model_path = _model_path()
+    if model_path:
+        _, _, note_events = predict(str(path), model_path)
+    else:
+        _, _, note_events = predict(str(path))
     return note_events
 
 
