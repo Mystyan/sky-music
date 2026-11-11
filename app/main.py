@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 
 from .audio import download_file
 from .config import settings
@@ -16,6 +16,7 @@ from .pipeline import run_pipeline
 from .schemas import Quality, QUALITY_SPECS, TranscribeUrlRequest
 
 STATIC_DIR = Path(__file__).parent / "static"
+INDEX_HTML = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
 
 app = FastAPI(title="sky-music", version=settings.app_version)
 app.add_middleware(
@@ -29,8 +30,8 @@ MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(200 * 1024 * 1024)))
 
 
 @app.get("/", include_in_schema=False)
-def index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+def index() -> HTMLResponse:
+    return HTMLResponse(INDEX_HTML)
 
 
 @app.get("/api/info")
