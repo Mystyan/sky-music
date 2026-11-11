@@ -31,7 +31,7 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          SRC="ghcr.io/${{ github.repository_owner }}/sky-music:${TAG}"
+          SRC="ghcr.io/mystyan/sky-music:${TAG}"
           DST="${ACR_HOST}/mystyan/skymusic:${TAG}"
           for i in 1 2 3; do
             echo "attempt $i: $SRC -> $DST"
