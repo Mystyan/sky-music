@@ -18,15 +18,15 @@ audio
 
 ## 三档模型质量
 
-| 档位 | 分轨 | 人声 | 多乐器 | 排布 |
-|---|---|---|---|---|
-| 低 `low` | Demucs | Basic Pitch | Basic Pitch | 单音，强拍根音 |
-| 中 `medium` | SubRoformer | GAME-medium | MuScriptor-medium | 双音，每两拍 |
-| 高 `high` | SubRoformer | VocalParse-1.7B | MuScriptor-large | 三音，每拍 |
+| 档位 | 分轨 | 人声 | 多乐器 |
+|---|---|---|---|
+| 低 `low` | Demucs | Basic Pitch | Basic Pitch |
+| 中 `medium` | SubRoformer | GAME-medium | MuScriptor-medium |
+| 高 `high` | SubRoformer | VocalParse-1.7B | MuScriptor-large |
 
 三档都必须加载真实模型：低档不会偷偷用 mock，中档不会降级到低档，高档不会降级到中档。模型缺失时接口返回 503 并指出缺哪一个权重，而不是输出假谱。
 
-单音/三音指**同时按键数**：单音同一时刻最多 1 个键，三音最多 3 个键同时响。
+编排完全使用 `sky-scores` 的 MIDI 编配逻辑：主唱每个起音保留、贝斯根音 + 和声轨统计和弦、按段落分档、同键 70ms 自动换键。**不再限制同一时刻的按键数**，该响几个音就响几个音。
 
 ## 本地运行
 

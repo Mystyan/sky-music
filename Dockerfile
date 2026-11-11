@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && python -c "from demucs.pretrained import get_model; get_model('htdemucs')"
 
 COPY app ./app
+COPY vendor ./vendor
 COPY README.md ./
 
 EXPOSE 9000

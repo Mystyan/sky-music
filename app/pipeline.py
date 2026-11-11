@@ -8,7 +8,7 @@ import numpy as np
 
 from .config import settings
 from .schemas import Quality, QUALITY_SPECS
-from .stages.arrange import arrange
+from .stages.repo_arrange import arrange_from_midi
 from .stages.export import to_abc15, to_skystudio
 from .stages.harmony import detect_key, infer_chords
 from .stages.instruments import transcribe_instruments
@@ -73,8 +73,8 @@ def run_pipeline(
         mark("rhythm_harmony", "librosa", t0)
 
         t0 = time.perf_counter()
-        arrangement = arrange(melody, tracks, analysis, quality)
-        mark("arrange", quality.value, t0)
+        arrangement = arrange_from_midi(melody, tracks, analysis, quality, title, author)
+        mark("arrange", "sky-scores", t0)
 
         t0 = time.perf_counter()
         sky_json = to_skystudio(arrangement, title, author)

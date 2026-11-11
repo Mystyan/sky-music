@@ -24,7 +24,6 @@ QUALITY_SPECS = {
         "vocal_size": "small",
         "instrument_model": "basic_pitch",
         "instrument_size": "small",
-        "max_simultaneous": 1,
         "quantize_div": 2,
         "max_notes_per_second": 4.0,
         "harmony_voices": 1,
@@ -38,7 +37,6 @@ QUALITY_SPECS = {
         "vocal_size": "medium",
         "instrument_model": "muscriptor",
         "instrument_size": "medium",
-        "max_simultaneous": 2,
         "quantize_div": 4,
         "max_notes_per_second": 8.0,
         "harmony_voices": 2,
@@ -52,7 +50,6 @@ QUALITY_SPECS = {
         "vocal_size": "large",
         "instrument_model": "muscriptor",
         "instrument_size": "large",
-        "max_simultaneous": 3,
         "quantize_div": 4,
         "max_notes_per_second": 12.0,
         "harmony_voices": 3,
@@ -140,4 +137,3 @@ class QualityInfo(BaseModel):
     description: str
     vocal_model: str
     instrument_model: str
-    max_simultaneous: int

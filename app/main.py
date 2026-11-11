@@ -57,7 +57,6 @@ def qualities() -> list[dict]:
             "vocal_model": f'{spec["vocal_model"]}-{spec["vocal_size"]}',
             "instrument_model": f'{spec["instrument_model"]}-{spec["instrument_size"]}',
             "separator": spec["separator"],
-            "max_simultaneous": spec["max_simultaneous"],
         }
         for quality, spec in QUALITY_SPECS.items()
     ]
