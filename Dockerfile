@@ -33,7 +33,18 @@ RUN pip install --no-cache-dir --no-deps \
 
 RUN pip install --no-cache-dir --no-deps nvidia-nccl-cu12==2.21.5
 
-RUN pip install --no-cache-dir --no-deps --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1
+# torch 本体拆成 3 个层安装：ACR 单次上传会话有时限，单层越小越稳
+RUN pip download --no-cache-dir --no-deps -d /tmp/w --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1 \
+ && python -c "import glob,zipfile; z=zipfile.ZipFile(glob.glob('/tmp/w/torch-*.whl')[0]); z.extract('torch/lib/libtorch_cuda.so','/usr/local/lib/python3.10/site-packages')" \
+ && rm -rf /tmp/w
+
+RUN pip download --no-cache-dir --no-deps -d /tmp/w --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1 \
+ && python -c "import glob,zipfile; z=zipfile.ZipFile(glob.glob('/tmp/w/torch-*.whl')[0]); z.extract('torch/lib/libtorch_cpu.so','/usr/local/lib/python3.10/site-packages')" \
+ && rm -rf /tmp/w
+
+RUN pip download --no-cache-dir --no-deps -d /tmp/w --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1 \
+ && python -c "import glob,zipfile; w=zipfile.ZipFile(glob.glob('/tmp/w/torch-*.whl')[0]); skip={'torch/lib/libtorch_cuda.so','torch/lib/libtorch_cpu.so'}; [w.extract(n,'/usr/local/lib/python3.10/site-packages') for n in w.namelist() if n not in skip]" \
+ && rm -rf /tmp/w
 
 # --- application dependencies ---
 RUN pip install --no-cache-dir fastapi 'uvicorn[standard]' python-multipart \
