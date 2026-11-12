@@ -5,12 +5,17 @@ ENV PYTHONUNBUFFERED=1 \
     MOCK_MODE=0 \
     MODEL_DIR=/tmp/models \
     HF_ENDPOINT=https://hf-mirror.com \
-    HF_HOME=/tmp/models/hf \
+    HF_HOME=/root/.cache/huggingface \
     PORT=9000 \
     OMP_NUM_THREADS=8 \
     HF_HUB_DISABLE_TELEMETRY=1
 
 WORKDIR /app
+
+# SubRoformer 的分频前端需要在运行期编译 C++ 扩展，镜像里必须带编译器
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gcc g++ \
+ && rm -rf /var/lib/apt/lists/*
 
 # --- 基础数值/服务依赖 ---
 RUN pip install --no-cache-dir \
@@ -68,6 +73,9 @@ RUN pip install --no-cache-dir muscriptor
 # --- 中/高档 SubRoformer 分轨（Python 3.11）---
 RUN pip install --no-cache-dir \
     "https://github.com/ArchiMickey/SubRoformer/archive/refs/heads/main.tar.gz"
+
+# 预下载 SubRoformer 权重并预编译 C++ 扩展，避免运行期现场编译
+RUN python -c "from subroformer.inference.engine import load_separator; load_separator(device='cpu'); print('subroformer ready')"
 
 # --- 高档 VocalParse 人声转谱 ---
 RUN pip install --no-cache-dir --no-deps \
