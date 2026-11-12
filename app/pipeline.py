@@ -18,13 +18,14 @@ from .stages.separation import separate
 from .stages.vocal import transcribe_vocal
 from .audio import convert_to_wav, ffprobe_duration
 
-STAGES = ["ingest", "load", "separate", "vocal", "instruments", "rhythm_harmony", "arrange", "export"]
+STAGES = ["prepare", "ingest", "load", "separate", "vocal", "instruments", "rhythm_harmony", "arrange", "export"]
 
 
 def stage_models(quality: Quality) -> dict[str, str]:
     """每一档、每个阶段实际使用的模型，供前端展示。"""
     spec = QUALITY_SPECS[quality]
     return {
+        "prepare": f'{spec["separator"]}+{spec["vocal_model"]}+{spec["instrument_model"]}',
         "ingest": "ffmpeg",
         "load": "librosa",
         "separate": spec["separator"],
@@ -67,6 +68,15 @@ def run_pipeline(
 
     with __import__("tempfile").TemporaryDirectory(dir=str(settings.temp_dir)) as tmp:
         workdir = Path(tmp)
+        begin("prepare")
+        t0 = time.perf_counter()
+        if not settings.mock_mode:
+            from . import models as model_store
+
+            for note in model_store.prepare(quality.value, report=lambda msg: emit({"type": "stage_note", "stage": "prepare", "note": msg})):
+                warnings.append(note)
+        mark("prepare", models["prepare"], t0)
+
         begin("ingest")
         t0 = time.perf_counter()
         wav = convert_to_wav(audio_path, workdir / "input.wav", sample_rate=44100, mono=False)

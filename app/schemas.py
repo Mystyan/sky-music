@@ -31,10 +31,10 @@ QUALITY_SPECS = {
     },
     Quality.medium: {
         "label": "中",
-        "description": "标准模型：SubRoformer + GAME-medium + MuScriptor-medium，双音输出。",
+        "description": "标准模型：SubRoformer + Basic Pitch + MuScriptor-medium，双音输出。",
         "separator": "subroformer",
-        "vocal_model": "game",
-        "vocal_size": "medium",
+        "vocal_model": "basic_pitch",
+        "vocal_size": "small",
         "instrument_model": "muscriptor",
         "instrument_size": "medium",
         "quantize_div": 4,
@@ -44,7 +44,7 @@ QUALITY_SPECS = {
     },
     Quality.high: {
         "label": "高",
-        "description": "最高质量：SubRoformer + VocalParse-1.7B + GAME-large + MuScriptor-large，三音输出。",
+        "description": "最高质量：SubRoformer + VocalParse-1.7B + MuScriptor-large，三音输出。",
         "separator": "subroformer",
         "vocal_model": "vocalparse",
         "vocal_size": "large",

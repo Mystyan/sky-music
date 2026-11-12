@@ -186,7 +186,7 @@
       </div>
       <div class="q" data-q="medium">
         <h3>中</h3><div class="tag">标准质量</div>
-        <p>SubRoformer + GAME-medium + MuScriptor-medium<br />双音与和弦</p>
+        <p>SubRoformer + Basic Pitch + MuScriptor-medium<br />双音与和弦</p>
       </div>
       <div class="q" data-q="high">
         <h3>高</h3><div class="tag">最高质量</div>
@@ -237,7 +237,7 @@ const NOTE_NAMES = ["C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5",
 const API_BASE = new URLSearchParams(location.search).get("api")
   || (location.hostname.endsWith("fcapp.run") ? "" : "https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run");
 const STAGE_LABELS = {
-  ingest: "解码音频", load: "重采样", separate: "分离音轨", vocal: "人声转谱",
+  prepare: "准备模型", ingest: "解码音频", load: "重采样", separate: "分离音轨", vocal: "人声转谱",
   instruments: "乐器转谱", rhythm_harmony: "节奏与和弦", arrange: "光遇编配", export: "导出谱面",
 };
 const $ = (id) => document.getElementById(id);
@@ -367,8 +367,10 @@ $("go").addEventListener("click", async () => {
       const pct = Math.max(3, Math.min(99, Math.round(t.progress * 100)));
       $("bar").style.width = pct + "%";
       if (t.status === "running") {
+        const lastNote = [...t.events].reverse().find((e) => e.type === "stage_note");
+        const extra = lastNote && current === "prepare" ? ` · ${escapeHtml(lastNote.note)}` : "";
         $("phase").innerHTML = current
-          ? `<b>${STAGE_LABELS[current] || current}</b> · ${escapeHtml(stageModels[current] || "")}`
+          ? `<b>${STAGE_LABELS[current] || current}</b> · ${escapeHtml(stageModels[current] || "")}${extra}`
           : "<b>准备中</b>";
         setStatus(`<span class="spinner"></span>处理中 ${pct}% · 已用 ${t.elapsed}s`);
         setTimeout(poll, 1200);

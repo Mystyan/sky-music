@@ -58,7 +58,7 @@ def _chunks(path: Path, duration: float) -> list[tuple[float, float]]:
     return chunks or [(0.0, duration)]
 
 
-def _vocalparse_notes(path: Path, duration: float) -> list[Note]:
+def _vocalparse_notes(path: Path, duration: float, checkpoint: str) -> list[Note]:
     from vocalparse import transcribe_one  # type: ignore
     from vocalparse.evaluation import NOTE_DUR_MAP, SILENCE_WORDS  # type: ignore
 
@@ -72,7 +72,7 @@ def _vocalparse_notes(path: Path, duration: float) -> list[Note]:
             capture_output=True, check=False,
         )
         parsed = transcribe_one(
-            audio=str(clip), checkpoint=settings.vocalparse_ckpt, parse=True
+            audio=str(clip), checkpoint=checkpoint, parse=True
         )
         if not parsed:
             continue
@@ -139,10 +139,11 @@ def transcribe_vocal(
             ) from exc
 
     if model == "vocalparse":
-        if not settings.vocalparse_ckpt:
-            raise ModelUnavailable("高音质档需要 VocalParse，但 VOCALPARSE_CKPT 未配置。")
         try:
-            return _vocalparse_notes(path, duration), "vocalparse", warnings
+            from .. import models as model_store
+
+            checkpoint = settings.vocalparse_ckpt or str(model_store.vocalparse_dir())
+            return _vocalparse_notes(path, duration, checkpoint), "vocalparse", warnings
         except Exception as exc:
             raise ModelUnavailable(f"VocalParse 不可用：{exc.__class__.__name__}: {exc}") from exc
 

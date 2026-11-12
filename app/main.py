@@ -130,21 +130,6 @@ def create_task(
 ) -> dict:
     """创建转谱任务，立即返回 task_id；用 GET /api/tasks/{id} 查询进度。"""
     path = _save_upload(file)
-    if settings.mock_mode is False and quality is not Quality.low:
-        spec = QUALITY_SPECS[quality]
-        missing = []
-        if spec["separator"] == "subroformer" and not settings.subroformer_dir:
-            missing.append("SUBROFORMER_DIR")
-        if spec["vocal_model"] == "game" and not settings.game_dir:
-            missing.append("GAME_DIR")
-        if spec["vocal_model"] == "vocalparse" and not settings.vocalparse_ckpt:
-            missing.append("VOCALPARSE_CKPT")
-        if missing:
-            path.unlink(missing_ok=True)
-            raise HTTPException(
-                status_code=503,
-                detail=f"{quality.value} 档缺少模型配置：{', '.join(missing)}",
-            )
     task_id = tasks.create(path, quality, title, author)
     return {"task_id": task_id, "status_url": f"/api/tasks/{task_id}"}
 
