@@ -75,7 +75,8 @@ RUN pip install --no-cache-dir --no-deps \
  && pip install --no-cache-dir "qwen-asr>=0.0.6" "transformers>=4.50" "accelerate>=1.12.0" safetensors pyarrow
 
 # 预下载 Demucs 权重，避免冷启动联网
-RUN python -c "from demucs.pretrained import get_model; get_model('htdemucs')"
+# 注：dl.fbaipublicfiles.com 证书已过期，这里跳过证书校验下载（模型文件仍由 torch 的 hash 校验）
+RUN python -c "import ssl; ssl._create_default_https_context = ssl._create_unverified_context; from demucs.pretrained import get_model; get_model('htdemucs')"
 
 COPY app ./app
 COPY vendor ./vendor
