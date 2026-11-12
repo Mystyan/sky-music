@@ -89,9 +89,14 @@ def separate(src: str | Path, workdir: str | Path, spec: dict) -> Stems:
         try:
             return _subroformer(src, workdir)
         except Exception as exc:
+            if preferred == "subroformer":
+                # 中/高档必须用 SubRoformer，失败不降级到 Demucs
+                raise ModelUnavailable(
+                    f"SubRoformer 不可用：{exc.__class__.__name__}: {exc}"
+                ) from exc
             warnings.append(f"SubRoformer 不可用：{exc.__class__.__name__}: {exc}")
 
-    if preferred in ("auto", "demucs", "subroformer"):
+    if preferred in ("auto", "demucs"):
         try:
             return _demucs(src, workdir)
         except Exception as exc:
