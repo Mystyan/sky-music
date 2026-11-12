@@ -59,8 +59,8 @@ RUN pip install --no-cache-dir librosa pretty_midi
 RUN pip install --no-cache-dir --no-deps basic-pitch==0.4.0 \
  && pip install --no-cache-dir mir-eval resampy scikit-learn onnxruntime
 
-# --- 低档 Demucs ---
-RUN pip install --no-cache-dir demucs
+# --- 低档 Demucs（锁 torchaudio，避免 pip 连带升级 torch）---
+RUN pip install --no-cache-dir "torchaudio==2.5.1" demucs
 
 # --- 中/高档 MuScriptor（权重首次调用时下载到 MODEL_DIR）---
 RUN pip install --no-cache-dir muscriptor
