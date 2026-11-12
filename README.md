@@ -54,16 +54,33 @@ curl -F "file=@test.mp3" -F "quality=medium" -F "title=测试" \
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| `GET` | `/` | 内置 WebUI（FC 默认域名会强制下载，建议用 `docs/` 单独托管前端） |
 | `GET` | `/health` | 健康检查 |
-| `GET` | `/api/qualities` | 低/中/高三档对应的模型 |
-| `POST` | `/api/transcribe` | multipart：`file`、`quality`、`title`、`author` |
+| `GET` | `/api/status` | 服务状态：设备、忙碌数、各档位每阶段模型 |
+| `GET` | `/api/qualities` | 低/中/高三档对应的模型（含每阶段模型） |
+| `POST` | `/api/tasks` | multipart：`file`、`quality`、`title`、`author` → 返回 `task_id` |
+| `GET` | `/api/tasks/{task_id}` | 轮询进度：`status`、`stage`、`progress`、`events`、`result` |
+| `POST` | `/api/transcribe` | 同步转谱（一次返回全部结果） |
 | `POST` | `/api/transcribe-url` | JSON：`audio_url`、`quality`、`title`、`author` |
 
-部署到 FC 后，公开地址形如：
+异步任务示例：
 
-```text
-https://<fc-function-url>/api/transcribe
+```bash
+TASK=$(curl -s -F "file=@song.mp3" -F "quality=low" \
+  https://<fc-url>/api/tasks | python3 -c 'import json,sys;print(json.load(sys.stdin)["task_id"])')
+
+curl -s https://<fc-url>/api/tasks/$TASK | jq '{status,stage,progress}'
 ```
+
+`text/event-stream` 未提供；进度通过 1–2 秒轮询即可。任务状态保存在实例内存里，实例被回收后会失效（返回 404），前端会提示重新提交。
+
+## 前后端分离
+
+- 后端：函数计算 GPU 函数，容器监听 9000，只暴露 `/api/*`。
+- 前端：`docs/index.html` 是纯静态单页，可放 GitHub Pages / 对象存储 / 任意静态托管。
+- 前端通过 `?api=https://xxx.fcapp.run` 指定后端地址；未指定时默认指向 `https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run`。
+- 后端已开启 CORS（`allow_origins=["*"]`），跨域预检已验证通过。
+- 注意：FC 默认域名（`*.fcapp.run`）会给响应强制加 `Content-Disposition: attachment`，浏览器只会下载 HTML，因此前端不能直接跑在 FC 默认域名上，必须单独托管或绑定自定义域名。
 
 ## Docker
 
@@ -99,25 +116,26 @@ docker run --gpus all --rm -p 9000:9000 \
 
 适配器是“能加载就加载，失败就回退并写 warning”，所以镜像本身不会因为缺权重启动失败。
 
-## 阿里云 FC
+## 阿里云 FC（当前线上配置）
 
-镜像构建完成后地址为：
+镜像：`crpi-tkfjf39csfld7amo.cn-hangzhou.personal.cr.aliyuncs.com/mystyan/skymusic2:latest`
 
-```text
-ghcr.io/<你的GitHub用户名>/sky-music:latest
-```
+| 配置 | 值 |
+|---|---|
+| GPU | Ada 48GB 整卡（1 卡） |
+| 内存 | 64GB（可选 64–100GB，步长 4GB） |
+| 临时磁盘 | 30GB |
+| 执行超时 | 900 秒 |
+| 单实例并发度 | 4 |
+| 实例类型 | 弹性实例，最小实例数 0 |
+| 监听端口 | 9000 |
+| 启动命令 | `uvicorn app.main:app --host 0.0.0.0 --port 9000` |
 
-FC 创建 GPU 函数时：
+函数地址：`https://sky-music-yjevzmmydv.cn-hangzhou.fcapp.run`
 
-- 卡型：Ada 系列
-- 规格：48GB × 2 卡（Ada.2）
-- 实例类型：弹性实例
-- 最小实例数：0
-- 监听端口：9000
-- 启动命令：`uvicorn app.main:app --host 0.0.0.0 --port 9000`
-- 执行超时：按最长音频设置（例如 3600 秒）
-- 临时硬盘：10GB
-- 模型：NAS 挂载到 `/mnt/models`，设置 `MOCK_MODE=0`
+更新流程：push 到 GitHub → Actions 构建 `ghcr.io/mystyan/sky-music:latest` → `crane copy` 到 ACR `skymusic2:latest` → FC 控制台重新部署。
+
+说明：ACR 的「GitHub 代码源构建」曾尝试接入，绑定成功但创建仓库时命名空间/仓库下拉框始终 disabled（阿里云侧问题），因此改用 GitHub Actions 构建 + 镜像同步。
 
 如果 FC 拉取 ghcr.io 失败，可在 ACR 里做一次镜像同步，或把镜像重新推到 ACR 后使用 ACR 地址。
 
